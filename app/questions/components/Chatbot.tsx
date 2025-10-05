@@ -71,11 +71,11 @@ export default function Chatbot() {
 					<div id="chat-window" className="h-full overflow-y-auto p-4 flex flex-col gap-4 align-top">
 						{messages.map((message, index) => {
 							return (
-								<div key={message.id} className={`p-3 rounded-lg max-w-3/4  ${message.role === 'user' ? 'bg-blue-500 text-white self-end' : 'bg-gray-200 text-gray-800 self-start'}`}>
+								<div key={message.id} className={`p-3 rounded-lg max-w-3/4 whitespace-pre-wrap ${message.role === 'user' ? 'bg-blue-500 text-white self-end' : 'bg-gray-200 text-gray-800 self-start'}`}>
 									{message.content}
 								</div>)
 						})}
-						{currentMessage && <div className="p-3 rounded-lg max-w-3/4 bg-gray-200 text-gray-800 self-start">{currentMessage}</div>}
+						{currentMessage && <div className="p-3 rounded-lg max-w-3/4 bg-gray-200 text-gray-800 self-start whitespace-pre-wrap">{currentMessage}</div>}
 						{isSubmitting && !currentMessage && (
 							<BouncingDots />
 						)}
