@@ -9,9 +9,6 @@ export const useSocket = () => {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const isAbortingRef = useRef(false);
 
-
-
-
 	useEffect(() => {
 		const socket = new WebSocket('ws://localhost:3000/api/websocket');
 		socket.onopen = () => {
@@ -55,17 +52,23 @@ export const useSocket = () => {
 
 	const sendMessage = (messages: { role: string, content: string }[]) => {
 		if (wsRef.current?.readyState !== WebSocket.OPEN && messages.length) return;
-		if (messages?.[0].content == '[ABORT]') {
-			isAbortingRef.current = true;
-			setCurrentMessage((m) => `${m}\n ..aborted.. \n`);
-		} else {
-			setCurrentMessage('');
-			isAbortingRef.current = false;
-		}
+		setCurrentMessage('');
+		isAbortingRef.current = false;
 		setLastMessage('');
 		setIsDone(false);
 		setIsSubmitting(true);
 		wsRef.current!.send(JSON.stringify({ history: messages }));
 	}
-	return { isDone, connectionStatus, currentMessage, lastMessage, sendMessage, isSubmitting }
+
+	const abortResponse = () => {
+		if (wsRef.current?.readyState !== WebSocket.OPEN) return;
+		isAbortingRef.current = true;
+		setCurrentMessage((m) => `${m}\n ..aborted.. \n`);
+		setIsDone(false);
+		setIsSubmitting(true);
+		setLastMessage('');
+		wsRef.current!.send(JSON.stringify({ history: [{ role: 'user', content: '[ABORT]' }] }));
+	}
+
+	return { isDone, connectionStatus, currentMessage, lastMessage, sendMessage, abortResponse, isSubmitting }
 }

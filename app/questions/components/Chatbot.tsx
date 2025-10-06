@@ -1,6 +1,7 @@
 'use client';
 import BouncingDots from "@/app/components/bouncingDots";
 import { useEffect, useMemo, useRef, useState } from "react";
+import ChatMessage from "./ChatMessage";
 import { useSocket } from "./hooks/useSocket";
 
 
@@ -10,7 +11,7 @@ export default function Chatbot() {
 	const lastVisibleRef = useRef<HTMLDivElement | null>(null);
 	const abortController = useRef<AbortController | null>(null);
 
-	const { connectionStatus, currentMessage, isDone, isSubmitting, lastMessage, sendMessage } = useSocket();
+	const { connectionStatus, currentMessage, isDone, isSubmitting, lastMessage, sendMessage, abortResponse } = useSocket();
 
 	useEffect(() => {
 		if (isDone) {
@@ -20,7 +21,7 @@ export default function Chatbot() {
 
 	useEffect(() => {
 		if (lastVisibleRef.current) {
-			lastVisibleRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+			lastVisibleRef.current.scrollIntoView({ behavior: "auto", block: "end" });
 		}
 	}, [messages, currentMessage]);
 
@@ -41,6 +42,13 @@ export default function Chatbot() {
 		return connectionStatus === "open" && input.trim().length > 0 && !isSubmitting;
 	}, [connectionStatus, input]);
 
+	const messagesWithCurrentMessage = () => {
+		if (currentMessage) {
+			return [...messages, { role: "assistant", content: currentMessage, id: window.crypto.randomUUID() }];
+		}
+		return messages;
+	}
+
 	return (
 		<div className="pt-4">
 			<h1 className="text-center">Ollama Streaming Chat</h1>
@@ -59,7 +67,7 @@ export default function Chatbot() {
 						type="button"
 						id="abortButton"
 						disabled={connectionStatus !== "open" || !currentMessage}
-						onClick={() => { sendMessage([{ role: 'user', content: "[ABORT]" }]) }}
+						onClick={() => { abortResponse(); }}
 						className={`px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500
 						${connectionStatus !== "open" || !currentMessage
 								? "bg-red-300 text-white"
@@ -69,13 +77,9 @@ export default function Chatbot() {
 				</form>
 				<div className="p-4 border border-gray-300 w-full h-[450px]">
 					<div id="chat-window" className="h-full overflow-y-auto p-4 flex flex-col gap-4 align-top">
-						{messages.map((message, index) => {
-							return (
-								<div key={message.id} className={`p-3 rounded-lg max-w-3/4 whitespace-pre-wrap ${message.role === 'user' ? 'bg-blue-500 text-white self-end' : 'bg-gray-200 text-gray-800 self-start'}`}>
-									{message.content}
-								</div>)
+						{messagesWithCurrentMessage().map((message) => {
+							return <ChatMessage message={message} key={message.id} />
 						})}
-						{currentMessage && <div className="p-3 rounded-lg max-w-3/4 bg-gray-200 text-gray-800 self-start whitespace-pre-wrap">{currentMessage}</div>}
 						{isSubmitting && !currentMessage && (
 							<BouncingDots />
 						)}
